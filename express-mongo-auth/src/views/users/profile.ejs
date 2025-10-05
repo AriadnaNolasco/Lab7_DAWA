@@ -7,20 +7,23 @@
             <h4 class="blue-text text-darken-2" style="font-weight: 600; margin-bottom: 25px;">Mi Perfil</h4>
 
             <div class="center-align" style="margin-bottom: 20px;">
-              <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
-                   alt="Avatar" class="circle responsive-img z-depth-2"
-                   style="width: 120px; height: 120px; object-fit: cover;">
+              <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Avatar"
+                class="circle responsive-img z-depth-2" style="width: 120px; height: 120px; object-fit: cover;">
             </div>
 
-            <div class="section" id="profileData" style="margin-top: 10px;">
-              <!-- Datos cargados dinámicamente -->
-              <div class="progress" id="loadingBar"><div class="indeterminate"></div></div>
+            <div id="profileData">
+              <div class="progress" id="loadingBar">
+                <div class="indeterminate"></div>
+              </div>
             </div>
           </div>
 
           <div class="card-action center">
-            <a href="#" class="btn blue lighten-1 waves-effect waves-light">
+            <a id="editBtn" href="#" class="btn blue lighten-1 waves-effect waves-light">
               <i class="material-icons left">edit</i> Editar perfil
+            </a>
+            <a id="saveBtn" href="#" class="btn green lighten-1 waves-effect waves-light" style="display:none;">
+              <i class="material-icons left">save</i> Guardar
             </a>
             <a id="backDashboard" href="#" class="btn grey darken-2 waves-effect waves-light">
               <i class="material-icons left">dashboard</i> Ir al Dashboard
@@ -33,57 +36,103 @@
 </div>
 
 <script>
-async function loadProfile() {
-  const token = sessionStorage.getItem('token');
-  if (!token) return window.location.href = '/signIn';
+  let userData = null;
 
-  try {
-    const res = await fetch('/api/users/me', { headers: { Authorization: 'Bearer ' + token } });
-    if (res.status === 401) return window.location.href = '/signIn';
+  async function loadProfile() {
+    const token = sessionStorage.getItem('token');
+    if (!token) return window.location.href = '/signIn';
 
-    const data = await res.json();
-    const profile = document.getElementById('profileData');
-    document.getElementById('loadingBar').style.display = 'none';
+    try {
+      const res = await fetch('/api/users/me', { headers: { Authorization: 'Bearer ' + token } });
+      if (res.status === 401) return window.location.href = '/signIn';
 
-    // Mostrar datos
-    profile.innerHTML = `
-      <ul class="collection">
-        <li class="collection-item avatar">
-          <i class="material-icons circle blue">person</i>
-          <span class="title"><b>Nombre:</b> ${data.name}</span><br>
-          <b>Apellido:</b> ${data.lastName || ''}<br>
-          <b>Email:</b> ${data.email}
-        </li>
-        <li class="collection-item avatar">
-          <i class="material-icons circle green">call</i>
-          <span class="title"><b>Teléfono:</b> ${data.phoneNumber || 'No registrado'}</span>
-        </li>
-        <li class="collection-item avatar">
-          <i class="material-icons circle orange">cake</i>
-          <span class="title"><b>Fecha de nacimiento:</b> ${
-            data.birthdate ? new Date(data.birthdate).toLocaleDateString() : 'No registrada'
-          }</span>
-        </li>
-        <li class="collection-item avatar">
-          <i class="material-icons circle purple">verified_user</i>
-          <span class="title"><b>Roles:</b> ${data.roles.join(', ')}</span>
-        </li>
-      </ul>
-    `;
+      userData = await res.json();
+      const profile = document.getElementById('profileData');
+      document.getElementById('loadingBar').style.display = 'none';
 
-    // Detectar rol y redirigir al dashboard correcto
-    const btnDashboard = document.getElementById('backDashboard');
-    if (data.roles.includes('admin')) {
-      btnDashboard.href = '/dashboard-admin';
-    } else {
-      btnDashboard.href = '/dashboard-user';
+      renderProfile(userData);
+
+      // Configurar dashboard según rol
+      const btnDashboard = document.getElementById('backDashboard');
+      btnDashboard.href = userData.roles.includes('admin') ? '/dashboard-admin' : '/dashboard-user';
+
+    } catch (err) {
+      console.error(err);
+      M.toast({ html: 'Error al cargar perfil', classes: 'red' });
     }
-
-  } catch (err) {
-    console.error(err);
-    M.toast({ html: 'Error al cargar perfil', classes: 'red' });
   }
-}
 
-loadProfile();
+  function renderProfile(data) {
+    document.getElementById('profileData').innerHTML = `
+    <ul class="collection">
+      <li class="collection-item"><b>Nombre:</b> ${data.name}</li>
+      <li class="collection-item"><b>Apellido:</b> ${data.lastName || ''}</li>
+      <li class="collection-item"><b>Correo:</b> ${data.email}</li>
+      <li class="collection-item"><b>Teléfono:</b> ${data.phoneNumber || 'No registrado'}</li>
+      <li class="collection-item"><b>Fecha de nacimiento:</b> ${data.birthdate ? new Date(data.birthdate).toLocaleDateString() : 'No registrada'
+      }</li>
+      <li class="collection-item"><b>Roles:</b> ${data.roles.join(', ')}</li>
+    </ul>
+  `;
+  }
+
+  // 🧩 Cambiar a modo edición
+  document.getElementById('editBtn').addEventListener('click', () => {
+    const data = userData;
+    const profile = document.getElementById('profileData');
+    document.getElementById('editBtn').style.display = 'none';
+    document.getElementById('saveBtn').style.display = 'inline-block';
+
+    profile.innerHTML = `
+    <div class="input-field">
+      <input id="editName" type="text" value="${data.name}" required>
+      <label for="editName" class="active">Nombre</label>
+    </div>
+    <div class="input-field">
+      <input id="editLastName" type="text" value="${data.lastName || ''}" required>
+      <label for="editLastName" class="active">Apellido</label>
+    </div>
+    <div class="input-field">
+      <input id="editPhone" type="text" value="${data.phoneNumber || ''}">
+      <label for="editPhone" class="active">Teléfono</label>
+    </div>
+    <div class="input-field">
+      <input id="editBirthdate" type="date" value="${data.birthdate ? new Date(data.birthdate).toISOString().split('T')[0] : ''
+      }">
+      <label for="editBirthdate" class="active">Fecha de nacimiento</label>
+    </div>
+  `;
+  });
+
+  // 🧩 Guardar cambios
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const token = sessionStorage.getItem('token');
+    const updated = {
+      name: document.getElementById('editName').value,
+      lastName: document.getElementById('editLastName').value,
+      phoneNumber: document.getElementById('editPhone').value,
+      birthdate: document.getElementById('editBirthdate').value
+    };
+
+    const res = await fetch('/api/users/me', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token
+      },
+      body: JSON.stringify(updated)
+    });
+
+    if (res.ok) {
+      M.toast({ html: 'Perfil actualizado', classes: 'green' });
+      document.getElementById('editBtn').style.display = 'inline-block';
+      document.getElementById('saveBtn').style.display = 'none';
+      loadProfile(); // recargar datos
+    } else {
+      const data = await res.json();
+      M.toast({ html: data.message || 'Error al guardar', classes: 'red' });
+    }
+  });
+
+  loadProfile();
 </script>

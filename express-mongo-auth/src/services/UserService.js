@@ -17,9 +17,17 @@ class UserService {
             id: user._id,
             email: user.email,
             name: user.name,
+            lastName: user.lastName,
+            phoneNumber: user.phoneNumber,
+            birthdate: user.birthdate,
             roles: user.roles.map(r => r.name)
         };
     }
+
+    async updateById(id, data) {
+        return userRepository.updateById(id, data);
+    }
+
 }
 
 export default new UserService();

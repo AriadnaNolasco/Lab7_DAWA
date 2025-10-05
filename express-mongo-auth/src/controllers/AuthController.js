@@ -14,7 +14,7 @@ class AuthController {
             }
 
             const user = await authService.signUp(payload);
-            res.redirect('/signIn');
+            res.status(201).json({ message: 'Usuario registrado con éxito' });
 
             console.log("Payload recibido:", req.body);
         } catch (err) {
