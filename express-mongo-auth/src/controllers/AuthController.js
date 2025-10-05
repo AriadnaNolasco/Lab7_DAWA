@@ -12,25 +12,31 @@ class AuthController {
             if (payload.birthdate) {
                 payload.birthdate = new Date(payload.birthdate);
             }
-            const user = await authService.signUp(payload);
-            return res.redirect('/signIn');
 
+            const user = await authService.signUp(payload);
+            res.redirect('/signIn');
+
+            console.log("Payload recibido:", req.body);
         } catch (err) {
             next(err);
         }
-        
-        console.log("Payload recibido:", req.body);
     }
 
     async signIn(req, res, next) {
         try {
             const { email, password } = req.body;
-
             if (!email || !password)
                 return res.status(400).json({ message: 'El email y password son requeridos' });
 
-            const token = await authService.signIn({ email, password });
-            return res.redirect('user/dashboard');
+            // 👇 authService devuelve { token, user }
+            const { token, user } = await authService.signIn({ email, password });
+
+            // Devolver datos al frontend
+            res.status(200).json({
+                token,
+                role: user?.roles?.[0]?.name || 'user',
+                name: user?.name || '',
+            });
         } catch (err) {
             next(err);
         }

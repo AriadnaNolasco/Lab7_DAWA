@@ -1,13 +1,59 @@
-<div class="row">
-  <form class="col s12" method="POST" action="/api/auth/signIn">
-    <div class="input-field col s12">
-      <input id="email" type="email" name="email" required>
-      <label for="email">Correo</label>
+<div class="row" style="margin-top: 60px;">
+  <div class="col s12 m6 offset-m3">
+    <div class="card z-depth-2 hoverable">
+      <div class="card-content">
+        <span class="card-title center blue-text text-darken-2">
+          <i class="material-icons left">lock</i> Iniciar Sesión
+        </span>
+        <form id="loginForm">
+          <div class="input-field">
+            <input id="email" type="email" required />
+            <label for="email">Correo electrónico</label>
+          </div>
+          <div class="input-field">
+            <input id="password" type="password" required />
+            <label for="password">Contraseña</label>
+          </div>
+          <div class="center-align">
+            <button class="btn blue waves-effect waves-light" type="submit">
+              Entrar
+            </button>
+          </div>
+        </form>
+        <p class="center grey-text">
+          ¿No tienes cuenta? <a href="/signUp">Regístrate aquí</a>
+        </p>
+      </div>
     </div>
-    <div class="input-field col s12">
-      <input id="password" type="password" name="password" required>
-      <label for="password">Contraseña</label>
-    </div>
-    <button class="btn waves-effect waves-light teal" type="submit">Entrar</button>
-  </form>
+  </div>
 </div>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const res = await fetch('/api/auth/signIn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      sessionStorage.setItem('token', data.token);
+      M.toast({ html: `Bienvenido, ${data.name}`, classes: 'green' });
+
+      // 👇 Redirección según rol
+      if (data.role === 'admin') {
+        window.location.href = '/dashboard-admin';
+      } else {
+        window.location.href = '/dashboard-user';
+      }
+    } else {
+      M.toast({ html: data.message || 'Error al iniciar sesión', classes: 'red' });
+    }
+  });
+</script>

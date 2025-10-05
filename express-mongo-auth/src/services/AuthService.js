@@ -68,7 +68,7 @@ class AuthService {
         );
         // console.log("Verify:", jwt.verify(token, process.env.JWT_SECRET));
 
-        return { token };
+        return { token, user };
     }
 }
 

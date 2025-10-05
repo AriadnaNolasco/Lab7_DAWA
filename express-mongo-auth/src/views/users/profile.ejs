@@ -1,0 +1,89 @@
+<div class="container">
+  <div class="section">
+    <div class="row">
+      <div class="col s12 m8 offset-m2">
+        <div class="card z-depth-3" style="border-radius: 15px;">
+          <div class="card-content center-align">
+            <h4 class="blue-text text-darken-2" style="font-weight: 600; margin-bottom: 25px;">Mi Perfil</h4>
+
+            <div class="center-align" style="margin-bottom: 20px;">
+              <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                   alt="Avatar" class="circle responsive-img z-depth-2"
+                   style="width: 120px; height: 120px; object-fit: cover;">
+            </div>
+
+            <div class="section" id="profileData" style="margin-top: 10px;">
+              <!-- Datos cargados dinámicamente -->
+              <div class="progress" id="loadingBar"><div class="indeterminate"></div></div>
+            </div>
+          </div>
+
+          <div class="card-action center">
+            <a href="#" class="btn blue lighten-1 waves-effect waves-light">
+              <i class="material-icons left">edit</i> Editar perfil
+            </a>
+            <a id="backDashboard" href="#" class="btn grey darken-2 waves-effect waves-light">
+              <i class="material-icons left">dashboard</i> Ir al Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadProfile() {
+  const token = sessionStorage.getItem('token');
+  if (!token) return window.location.href = '/signIn';
+
+  try {
+    const res = await fetch('/api/users/me', { headers: { Authorization: 'Bearer ' + token } });
+    if (res.status === 401) return window.location.href = '/signIn';
+
+    const data = await res.json();
+    const profile = document.getElementById('profileData');
+    document.getElementById('loadingBar').style.display = 'none';
+
+    // Mostrar datos
+    profile.innerHTML = `
+      <ul class="collection">
+        <li class="collection-item avatar">
+          <i class="material-icons circle blue">person</i>
+          <span class="title"><b>Nombre:</b> ${data.name}</span><br>
+          <b>Apellido:</b> ${data.lastName || ''}<br>
+          <b>Email:</b> ${data.email}
+        </li>
+        <li class="collection-item avatar">
+          <i class="material-icons circle green">call</i>
+          <span class="title"><b>Teléfono:</b> ${data.phoneNumber || 'No registrado'}</span>
+        </li>
+        <li class="collection-item avatar">
+          <i class="material-icons circle orange">cake</i>
+          <span class="title"><b>Fecha de nacimiento:</b> ${
+            data.birthdate ? new Date(data.birthdate).toLocaleDateString() : 'No registrada'
+          }</span>
+        </li>
+        <li class="collection-item avatar">
+          <i class="material-icons circle purple">verified_user</i>
+          <span class="title"><b>Roles:</b> ${data.roles.join(', ')}</span>
+        </li>
+      </ul>
+    `;
+
+    // Detectar rol y redirigir al dashboard correcto
+    const btnDashboard = document.getElementById('backDashboard');
+    if (data.roles.includes('admin')) {
+      btnDashboard.href = '/dashboard-admin';
+    } else {
+      btnDashboard.href = '/dashboard-user';
+    }
+
+  } catch (err) {
+    console.error(err);
+    M.toast({ html: 'Error al cargar perfil', classes: 'red' });
+  }
+}
+
+loadProfile();
+</script>

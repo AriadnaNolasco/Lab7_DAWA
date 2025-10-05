@@ -1,0 +1,85 @@
+<div class="container section">
+    <div class="row">
+        <div class="col s12">
+            <div class="card z-depth-3" style="border-radius: 15px;">
+                <div class="card-content">
+                    <div class="row valign-wrapper">
+                        <div class="col s12 m8">
+                            <h4 class="blue-text text-darken-2" style="font-weight: 600;">
+                                <i class="material-icons left">admin_panel_settings</i>
+                                Panel de Administración
+                            </h4>
+                            <p class="grey-text">Gestión general de usuarios registrados en el sistema</p>
+                        </div>
+                        <div class="col s12 m4 right-align">
+                            <a href="/profile" class="btn blue lighten-1 waves-effect waves-light">
+                                <i class="material-icons left">account_circle</i> Mi Perfil
+                            </a>
+                            <a href="/signIn" class="btn red lighten-1 waves-effect waves-light" onclick="logout()">
+                                <i class="material-icons left">logout</i> Salir
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+                    <div class="section">
+                        <table class="highlight responsive-table z-depth-1">
+                            <thead class="blue lighten-4">
+                                <tr>
+                                    <th><i class="material-icons tiny">person</i> Nombre</th>
+                                    <th><i class="material-icons tiny">email</i> Email</th>
+                                    <th><i class="material-icons tiny">verified_user</i> Roles</th>
+                                    <th><i class="material-icons tiny">today</i> Creado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTable">
+                                <tr>
+                                    <td colspan="4" class="center-align">Cargando usuarios...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadUsers() {
+        const token = sessionStorage.getItem('token');
+        if (!token) return window.location.href = '/signIn';
+
+        try {
+            const res = await fetch('/api/users', { headers: { Authorization: 'Bearer ' + token } });
+            if (!res.ok) return window.location.href = '/403';
+            const users = await res.json();
+
+            const tableBody = document.getElementById('userTable');
+            if (users.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="center-align grey-text">No hay usuarios registrados.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = users.map(u => `
+      <tr>
+        <td><i class="material-icons left blue-text">person</i>${u.name} ${u.lastName || ''}</td>
+        <td>${u.email}</td>
+        <td>${u.roles.map(r => `<span class="new badge blue lighten-2 white-text" data-badge-caption="">${r.name}</span>`).join(' ')}</td>
+        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+      </tr>
+    `).join('');
+        } catch (error) {
+            console.error(error);
+            M.toast({ html: 'Error al cargar usuarios', classes: 'red' });
+        }
+    }
+
+    function logout() {
+        sessionStorage.removeItem('token');
+        M.toast({ html: 'Sesión cerrada correctamente', classes: 'green' });
+        setTimeout(() => window.location.href = '/signIn', 800);
+    }
+
+    loadUsers();
+</script>
