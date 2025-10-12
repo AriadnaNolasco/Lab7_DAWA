@@ -1,4 +1,4 @@
-name: Deploy to Renderm
+name: Deploy to Renderm4
 
 on:
   push:
